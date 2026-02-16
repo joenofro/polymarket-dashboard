@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymarket Analytics Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+        }
+        .market-card {
+            cursor: pointer;
+        }
+        .market-card:hover {
+            background-color: #f8f9ff;
+        }
+        .volume-badge {
+            font-size: 0.85em;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .category-badge {
+            font-size: 0.75em;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        .premium-lock {
+            color: #ffc107;
+            font-size: 1.2em;
+        }
+        #loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+        }
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-graph-up"></i> Polymarket Analytics
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="nav-item">
+                    <span class="badge bg-light text-dark me-2">Free Version</span>
+                    <button class="btn btn-outline-light btn-sm" id="upgradeBtn">
+                        <i class="bi bi-star-fill"></i> Upgrade to Premium
+                    </button>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="h3">Prediction Markets Dashboard</h1>
+                <p class="text-muted">Real-time data from Polymarket. <span class="text-primary">Premium</span> features: advanced charts, signals, and alerts.</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search markets..." id="searchInput">
+                    <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Active Markets</h5>
+                        <div>
+                            <select class="form-select form-select-sm w-auto d-inline" id="categoryFilter">
+                                <option value="">All Categories</option>
+                            </select>
+                            <span class="badge bg-primary ms-2" id="marketCount">0 markets</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="loading">
+                            <div class="spinner-border text-primary spinner" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div id="marketsTable" style="display: none;">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th width="50%">Market</th>
+                                        <th>Category</th>
+                                        <th>Volume</th>
+                                        <th>Best Bid/Ask</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="marketsTbody">
+                                    <!-- Filled by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <small class="text-muted">Data updates hourly. Premium gets real‑time updates.</small>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Market Volume by Category <span class="premium-lock"><i class="bi bi-lock-fill"></i></span></h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="volumeChart"></canvas>
+                        <div class="text-center mt-3">
+                            <p class="text-muted">Upgrade to Premium to unlock advanced analytics charts.</p>
+                            <button class="btn btn-primary" id="upgradeChartBtn">
+                                <i class="bi bi-unlock"></i> Unlock Charts
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Top Markets <span class="badge bg-success">Live</span></h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="topMarketsList">
+                            <!-- Filled by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Premium Features</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Real‑time data
+                                <span class="premium-lock"><i class="bi bi-lock-fill"></i></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Advanced charts & signals
+                                <span class="premium-lock"><i class="bi bi-lock-fill"></i></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Telegram alerts
+                                <span class="premium-lock"><i class="bi bi-lock-fill"></i></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Historical data export
+                                <span class="premium-lock"><i class="bi bi-lock-fill"></i></span>
+                            </li>
+                        </ul>
+                        <div class="text-center mt-3">
+                            <button class="btn btn-success w-100" id="premiumCta">
+                                <i class="bi bi-lightning-fill"></i> Get Premium — $5/month
+                            </button>
+                            <small class="text-muted">7‑day free trial, cancel anytime</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">About This Dashboard</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>This dashboard is powered by <strong>AIDAN</strong> — an autonomous AI that monitors prediction markets.</p>
+                        <p>Free tier includes basic market data updated hourly. Premium subscribers get real‑time updates, advanced analytics, and trading signals.</p>
+                        <p class="mb-0"><a href="https://github.com/josephbrogden/polymarket-dashboard" target="_blank">View source on GitHub</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div class="modal fade" id="upgradeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upgrade to Premium</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Unlock all premium features for $5/month:</p>
+                    <ul>
+                        <li>Real‑time market data (vs hourly)</li>
+                        <li>Advanced charts & trading signals</li>
+                        <li>Telegram alerts for price movements</li>
+                        <li>Historical data CSV export</li>
+                        <li>Priority support</li>
+                    </ul>
+                    <div class="text-center">
+                        <button class="btn btn-primary btn-lg w-100" id="stripeCheckout">
+                            <i class="bi bi-credit-card"></i> Subscribe with Stripe
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
