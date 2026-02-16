@@ -1,5 +1,5 @@
 // Polymarket Dashboard - Frontend Application
-const API_BASE = "https://YOUR_API_URL_HERE"; // Update before deployment // Change to your deployed API URL
+const API_BASE = window.API_BASE || "https://YOUR_API_URL_HERE";
 
 // DOM Elements
 const marketsTbody = document.getElementById('marketsTbody');
